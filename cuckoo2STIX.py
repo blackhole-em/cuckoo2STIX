@@ -234,174 +234,180 @@ def main():
                                                  "targetFileName": "$target.file.name"}}}])
         _l.debug('Executed initial aggregation query.')
         for i in cs['result']:
-            # Get everything that looks like an ip address
-            ipv4Addresses[:] = []
-            hostNames[:] = []
-            networkUdpSrc = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.udp.src')
-            networkUdpDst = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.udp.dst')
-            networkIcmpSrc = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.icmp.src')
-            networkIcmpDst = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.icmp.dst')
-            networkTcpSrc = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.tcp.src')
-            networkTcpDst = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.tcp.dst')
-            networkDnsAnswersData = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.dns.answers.data')
-            networkDomainsIp = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.domains.ip')
-            # Aggregate all addresses and remove duplicates and filtered ones
-            ipv4Addresses += networkUdpSrc + networkUdpDst + networkIcmpSrc + networkIcmpDst + \
-                networkTcpSrc + networkTcpDst + networkDnsAnswersData + networkDomainsIp
-            ipv4Addresses = list(set(ipv4Addresses))
-            ipv4Addresses = filter(None, ipv4Addresses)
-            ipv4Addresses = list(set(ipv4Addresses) - set(fIpv4Addresses))
+            try:
+                # Get everything that looks like an ip address
+                ipv4Addresses[:] = []
+                hostNames[:] = []
+                networkUdpSrc = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.udp.src')
+                networkUdpDst = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.udp.dst')
+                networkIcmpSrc = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.icmp.src')
+                networkIcmpDst = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.icmp.dst')
+                networkTcpSrc = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.tcp.src')
+                networkTcpDst = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.tcp.dst')
+                networkDnsAnswersData = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.dns.answers.data')
+                networkDomainsIp = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.domains.ip')
+                # Aggregate all addresses and remove duplicates and filtered ones
+                ipv4Addresses += networkUdpSrc + networkUdpDst + networkIcmpSrc + networkIcmpDst + \
+                    networkTcpSrc + networkTcpDst + networkDnsAnswersData + networkDomainsIp
+                ipv4Addresses = list(set(ipv4Addresses))
+                ipv4Addresses = filter(None, ipv4Addresses)
+                ipv4Addresses = list(set(ipv4Addresses) - set(fIpv4Addresses))
 
-            # Get everything that looks like a domain name
-            networkHttpHost = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.http.host')
-            networkHosts = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.hosts')
-            networkDnsRequest = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.dns.request')
-            networkDomainsDomain = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('network.domains.domain')
-            # Aggregate all addresses and remove duplicates and filtered ones
-            hostNames += networkHttpHost + networkHosts + \
-                networkDnsRequest + networkDomainsDomain
-            hostNames = list(set(hostNames))
-            hostNames = filter(None, hostNames)
-            hostNames = list(set(hostNames) - set(fHostNames))
-            # Get file names
-            targetFileName = mongo_collection.find(
-                {
-                    "target.file.sha1": i['_id']['targetFileSha1'],
-                    "target.file.sha256": i['_id']['targetFileSha256'],
-                    "target.file.sha512": i['_id']['targetFileSha512'],
-                    "target.file.ssdeep": i['_id']['targetFileSsdeep'],
-                    "target.file.md5": i['_id']['targetFileMd5'],
-                    "target.file.size": i['_id']['targetFileSize'],
-                    "target.file.name": i['_id']['targetFileName']}).distinct('target.file.name')
-           
-            # Call the function to create the output, check if seen before first
-            if str(i['_id']['targetFileSha1']) + ',' + \
-                str(i['_id']['targetFileSha256']) + ',' + \
-                str(i['_id']['targetFileSha512']) + ',' + \
-                str(i['_id']['targetFileSsdeep']) + ',' + \
-                str(i['_id']['targetFileMd5']) + ',' + \
-                str(i['_id']['targetFileSize']) not in str(fSeenEntries):
-                    if ipv4Addresses or hostNames:
-                        genStixDoc(config.get('output','outputDir'),
-                                   str(i['_id']['targetFileSha1']),
-                                   str(i['_id']['targetFileSha256']),
-                                   str(i['_id']['targetFileSha512']),
-                                   str(i['_id']['targetFileSsdeep']),
-                                   str(i['_id']['targetFileMd5']),
-                                   str(i['_id']['targetFileSize']),
-                                   i['_id']['targetFileName'],
-                                   ipv4Addresses,
-                                   hostNames)
-                        # Write to file so that we can read back in as filter later
-                        fSeenEntriesFH.write(str(i['_id']['targetFileSha1']) + ',' + \
-                            str(i['_id']['targetFileSha256']) + ',' + \
-                            str(i['_id']['targetFileSha512']) + ',' + \
-                            str(i['_id']['targetFileSsdeep']) + ',' + \
-                            str(i['_id']['targetFileMd5']) + ',' + \
-                            str(i['_id']['targetFileSize']) + '\n')
-                        _l.debug('Updated SeenEntries file with: ' + \
-                            str(i['_id']['targetFileSha256']) + ',' + \
-                            str(i['_id']['targetFileSha512']) + ',' + \
-                            str(i['_id']['targetFileSsdeep']) + ',' + \
-                            str(i['_id']['targetFileMd5']) + ',' + \
-                            str(i['_id']['targetFileSize']) + \
-                            ' since content has been written to stix file.\n')
+                # Get everything that looks like a domain name
+                networkHttpHost = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.http.host')
+                networkHosts = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.hosts')
+                networkDnsRequest = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.dns.request')
+                networkDomainsDomain = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('network.domains.domain')
+                # Aggregate all addresses and remove duplicates and filtered ones
+                hostNames += networkHttpHost + networkHosts + \
+                    networkDnsRequest + networkDomainsDomain
+                hostNames = list(set(hostNames))
+                hostNames = filter(None, hostNames)
+                hostNames = list(set(hostNames) - set(fHostNames))
+                # Get file names
+                targetFileName = mongo_collection.find(
+                    {
+                        "target.file.sha1": i['_id']['targetFileSha1'],
+                        "target.file.sha256": i['_id']['targetFileSha256'],
+                        "target.file.sha512": i['_id']['targetFileSha512'],
+                        "target.file.ssdeep": i['_id']['targetFileSsdeep'],
+                        "target.file.md5": i['_id']['targetFileMd5'],
+                        "target.file.size": i['_id']['targetFileSize'],
+                        "target.file.name": i['_id']['targetFileName']}).distinct('target.file.name')
+
+                # Call the function to create the output, check if seen before first
+                if str(i['_id']['targetFileSha1']) + ',' + \
+                    str(i['_id']['targetFileSha256']) + ',' + \
+                    str(i['_id']['targetFileSha512']) + ',' + \
+                    str(i['_id']['targetFileSsdeep']) + ',' + \
+                    str(i['_id']['targetFileMd5']) + ',' + \
+                    str(i['_id']['targetFileSize']) not in str(fSeenEntries):
+                        if ipv4Addresses or hostNames:
+                            genStixDoc(config.get('output','outputDir'),
+                                       str(i['_id']['targetFileSha1']),
+                                       str(i['_id']['targetFileSha256']),
+                                       str(i['_id']['targetFileSha512']),
+                                       str(i['_id']['targetFileSsdeep']),
+                                       str(i['_id']['targetFileMd5']),
+                                       str(i['_id']['targetFileSize']),
+                                       i['_id']['targetFileName'],
+                                       ipv4Addresses,
+                                       hostNames)
+                            # Write to file so that we can read back in as filter later
+                            fSeenEntriesFH.write(str(i['_id']['targetFileSha1']) + ',' + \
+                                str(i['_id']['targetFileSha256']) + ',' + \
+                                str(i['_id']['targetFileSha512']) + ',' + \
+                                str(i['_id']['targetFileSsdeep']) + ',' + \
+                                str(i['_id']['targetFileMd5']) + ',' + \
+                                str(i['_id']['targetFileSize']) + '\n')
+                            _l.debug('Updated SeenEntries file with: ' + \
+                                str(i['_id']['targetFileSha256']) + ',' + \
+                                str(i['_id']['targetFileSha512']) + ',' + \
+                                str(i['_id']['targetFileSsdeep']) + ',' + \
+                                str(i['_id']['targetFileMd5']) + ',' + \
+                                str(i['_id']['targetFileSize']) + \
+                                ' since content has been written to stix file.\n')
+            except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                _l.info('!!!!!!!!!!!ERROR!!!!!!!!!!!')
+                _l.info('Row failed due to: ' + str(e) + "\n\n" + str(tb) + "\n\n" + str(repr(i)))
         conn.disconnect()
     fSeenEntriesFH.closed
     _l.info('Ended.')
