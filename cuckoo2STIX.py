@@ -207,11 +207,22 @@ def main():
     _l.info('Starting...')
 
     fSeenEntriesFH = open(config.get('filterOut','fSeenEntries'), 'a', 0)
-   
-    for dbs in config.get('dbsList','cuckoo').split(','):
+    
+    cfg_collections = config.get('mongo','dbCollectionNames')
+    if ',' in cfg_collections:
+        db_collection_names = cfg_collections.split(',')
+    else:
+        db_collection_names = [cfg_collections]
+    
+    cuckoo_names = config.get('dbsList','cuckoo')
+    if ',' in cuckoo_names:
+        cuckoo_servers = cuckoo_names.split(',')
+    else:
+        cuckoo_servers = [cuckoo_names]
+
+    for dbkey, dbs in enumerate(cuckoo_servers):
         db = conn[dbs]
-        db_name = config.get('dbName')
-        mongo_collection = getattr(db, db_name)
+        mongo_collection = getattr(db, db_collection_names[dbkey])
         _l.debug('Connected to data source.')
 
         # Get a list of file names and hashes from db
