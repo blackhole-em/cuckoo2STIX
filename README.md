@@ -5,6 +5,7 @@ cuckoo2STIX
 A python script to auto-generate STIX content from Cuckoo's reports stored in Mongodb
 
 Dependencies:
+
 pymongo
 stix
 libtaxii
@@ -13,13 +14,21 @@ Code was tested on Python 2.7 with pymongo 2.6.3, stix 1.1.0.4, libtaxii 1.1.101
 
 Layout:
 app.conf - Application configuration settings.
+
 cuckoo2Stix.py - Generates STIX content from Mongodb.
+
 fHostNames.txt - Input file - Whitelist of host names for suppression, one item per line, can be an empty file.
+
 fIpv4Addresses.txt - Input file - Whitelist of IP addresses for suppression, one item per line, can be an empty file.
+
 fSeenEntries.txt - Previously generated items, written by cuckoo2Stix.py, and read in subsequent runs so that duplicate items are not generated. 
+
 log.py - Logger
+
 logs/ - default logs directory
+
 output/ - default output directory
+
 taxiiUpload.py - Sample script to upload TAXII content for a given STIX document
 
 Usage Examples:
