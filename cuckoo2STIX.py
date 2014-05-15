@@ -210,12 +210,13 @@ def main():
    
     for dbs in config.get('dbsList','cuckoo').split(','):
         db = conn[dbs]
-        analysis = db.analysis
+        db_name = config.get('dbName')
+        mongo_collection = getattr(db, db_name)
         _l.debug('Connected to data source.')
 
         # Get a list of file names and hashes from db
         if args.jobId is '':
-            cs = analysis.aggregate([{"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
+            cs = mongo_collection.aggregate([{"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
                                                          "targetFileSha256": "$target.file.sha256",
                                                          "targetFileSha512": "$target.file.sha512",
                                                          "targetFileSsdeep": "$target.file.ssdeep",
@@ -223,7 +224,7 @@ def main():
                                                          "targetFileSize": "$target.file.size",
                                                          "targetFileName": "$target.file.name"}}}])
         else:
-            cs = analysis.aggregate([{"$match": {"info.id": int(args.jobId)}},
+            cs = mongo_collection.aggregate([{"$match": {"info.id": int(args.jobId)}},
                                                 {"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
                                                  "targetFileSha256": "$target.file.sha256",
                                                  "targetFileSha512": "$target.file.sha512",
@@ -236,7 +237,7 @@ def main():
             # Get everything that looks like an ip address
             ipv4Addresses[:] = []
             hostNames[:] = []
-            networkUdpSrc = analysis.find(
+            networkUdpSrc = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -245,7 +246,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.udp.src')
-            networkUdpDst = analysis.find(
+            networkUdpDst = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -254,7 +255,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.udp.dst')
-            networkIcmpSrc = analysis.find(
+            networkIcmpSrc = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -263,7 +264,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.icmp.src')
-            networkIcmpDst = analysis.find(
+            networkIcmpDst = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -272,7 +273,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.icmp.dst')
-            networkTcpSrc = analysis.find(
+            networkTcpSrc = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -281,7 +282,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.tcp.src')
-            networkTcpDst = analysis.find(
+            networkTcpDst = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -290,7 +291,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.tcp.dst')
-            networkDnsAnswersData = analysis.find(
+            networkDnsAnswersData = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -299,7 +300,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.dns.answers.data')
-            networkDomainsIp = analysis.find(
+            networkDomainsIp = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -316,7 +317,7 @@ def main():
             ipv4Addresses = list(set(ipv4Addresses) - set(fIpv4Addresses))
 
             # Get everything that looks like a domain name
-            networkHttpHost = analysis.find(
+            networkHttpHost = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -325,7 +326,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.http.host')
-            networkHosts = analysis.find(
+            networkHosts = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -334,7 +335,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.hosts')
-            networkDnsRequest = analysis.find(
+            networkDnsRequest = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -343,7 +344,7 @@ def main():
                     "target.file.md5": i['_id']['targetFileMd5'],
                     "target.file.size": i['_id']['targetFileSize'],
                     "target.file.name": i['_id']['targetFileName']}).distinct('network.dns.request')
-            networkDomainsDomain = analysis.find(
+            networkDomainsDomain = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
@@ -359,7 +360,7 @@ def main():
             hostNames = filter(None, hostNames)
             hostNames = list(set(hostNames) - set(fHostNames))
             # Get file names
-            targetFileName = analysis.find(
+            targetFileName = mongo_collection.find(
                 {
                     "target.file.sha1": i['_id']['targetFileSha1'],
                     "target.file.sha256": i['_id']['targetFileSha256'],
