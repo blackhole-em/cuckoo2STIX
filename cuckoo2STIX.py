@@ -248,13 +248,13 @@ def main():
     config = ConfigParser.ConfigParser()
     config.read('app.conf')
     conn = pymongo.MongoClient(config.get('mongo','dbUrl'))
-    with open(config.get('filterOut','fIpv4Addresses')) as fIpv4AddressesFH:
+    with open(config.get('filterOut','fIpv4Addresses'), 'r+') as fIpv4AddressesFH:
                 fIpv4Addresses = [line.rstrip('\n') for line in fIpv4AddressesFH]
     fIpv4AddressesFH.closed
-    with open(config.get('filterOut','fHostNames')) as fHostNamesFH:
+    with open(config.get('filterOut','fHostNames'), 'r+') as fHostNamesFH:
                 fHostNames = [line.rstrip('\n') for line in fHostNamesFH]
     fHostNamesFH.closed
-    with open(config.get('filterOut','fSeenEntries')) as fSeenEntriesFH:
+    with open(config.get('filterOut','fSeenEntries'), 'r+') as fSeenEntriesFH:
                 fSeenEntries = [line.rstrip('\n') for line in fSeenEntriesFH]
     fSeenEntriesFH.closed
 
