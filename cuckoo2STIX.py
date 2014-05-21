@@ -254,7 +254,7 @@ def main():
     with open(config.get('filterOut','fHostNames'), 'r+') as fHostNamesFH:
                 fHostNames = [line.rstrip('\n') for line in fHostNamesFH]
     fHostNamesFH.closed
-    with open(config.get('filterOut','fSeenEntries'), 'r+') as fSeenEntriesFH:
+    with open(config.get('filterOut','fSeenEntries'), 'w+') as fSeenEntriesFH:
                 fSeenEntries = [line.rstrip('\n') for line in fSeenEntriesFH]
     fSeenEntriesFH.closed
 
