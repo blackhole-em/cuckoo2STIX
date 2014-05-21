@@ -45,9 +45,60 @@ from cybox.objects.domain_name_object import DomainName
 from cybox.objects.file_object import File
 from cybox.common import Hash
 import cybox.utils
+import netaddr
 import log
 
 _l = log.setup_custom_logger('root')
+
+def keepAddresses(networkItems_):
+    """
+    Return a list that contains only addresses.
+    """
+    for i in networkItems_[:]:
+        try:
+            ip = netaddr.IPAddress(i)
+        except:
+            networkItems_.remove(i)
+    return networkItems_
+
+def keepHostNames(networkItems_):
+    """
+    Return a list that contains only items that are not addresses.
+    """
+    for i in networkItems_[:]:
+        try:
+            ip = netaddr.IPAddress(i)
+            networkItems_.remove(i)
+        except:
+            pass
+    return networkItems_
+
+def delIfMatchedAddr(ipv4Addresses_, fIpv4Addresses_):
+    """
+    Delete from list any addresses that are also found in the whitelist file. 
+    The netaddr module is used to allow cidr and ranges.
+    """
+    s1 = netaddr.IPSet(ipv4Addresses_)
+    l2 = []
+    for i in fIpv4Addresses_[:]:
+        m = re.search(r'(.*) \.\.\. (.*)', i)
+        if not m:
+            l2.append(i)
+        else:
+            l2 += netaddr.IPSet(netaddr.iter_iprange(m.group(1), m.group(2)))
+    s2 = netaddr.IPSet(l2)
+    return map(str, list(s1 - s2))
+
+def delIfMatchedHostName(hostNames_, fHostNames_):
+    """
+    Delete from list any names that are also found in the whitelist file, 
+    via regex matching.
+    """
+    for i in fHostNames_:
+        for j in hostNames_[:]:
+            if re.match(i + '$', j):
+                hostNames_.remove(j)
+    return hostNames_
 
 def reFileName(str_):
     """
@@ -186,10 +237,15 @@ def main():
     to create the stix doc. Handle de-dup and filter lists for indicators, as 
     well as stix items created in previous runs.
     """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--job-id', dest='jobId', default='', help='Optional - specific job id to pull.')
+    ap = argparse.ArgumentParser()
+    apg = ap.add_mutually_exclusive_group()
+    apg.add_argument('--job-id', dest='jobId', default='', help='Cuckoo job id to query.')
+    apg.add_argument('--md5', dest='md5', default='', help='File md5 hash to query.')
+    apg.add_argument('--sha1', dest='sha1', default='', help='File sha1 hash to query.')
+    apg.add_argument('--sha256', dest='sha256', default='', help='File sha256 hash to query.')
+    apg.add_argument('--sha512', dest='sha512', default='', help='File sha512 hash to query.')
+    args = ap.parse_args()
     config = ConfigParser.ConfigParser()
-    args = parser.parse_args()
     config.read('app.conf')
     conn = pymongo.MongoClient(config.get('mongo','dbUrl'))
     with open(config.get('filterOut','fIpv4Addresses')) as fIpv4AddressesFH:
@@ -202,12 +258,13 @@ def main():
                 fSeenEntries = [line.rstrip('\n') for line in fSeenEntriesFH]
     fSeenEntriesFH.closed
 
+    networkItems = []
     ipv4Addresses = []
     hostNames = []
     _l.info('Starting...')
 
     fSeenEntriesFH = open(config.get('filterOut','fSeenEntries'), 'a', 0)
-    
+   
     cfg_collections = config.get('mongo','dbCollectionNames')
     if ',' in cfg_collections:
         db_collection_names = cfg_collections.split(',')
@@ -226,15 +283,7 @@ def main():
         _l.debug('Connected to data source.')
 
         # Get a list of file names and hashes from db
-        if args.jobId is '':
-            cs = mongo_collection.aggregate([{"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
-                                                         "targetFileSha256": "$target.file.sha256",
-                                                         "targetFileSha512": "$target.file.sha512",
-                                                         "targetFileSsdeep": "$target.file.ssdeep",
-                                                         "targetFileMd5": "$target.file.md5",
-                                                         "targetFileSize": "$target.file.size",
-                                                         "targetFileName": "$target.file.name"}}}])
-        else:
+        if args.jobId:
             cs = mongo_collection.aggregate([{"$match": {"info.id": int(args.jobId)}},
                                                 {"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
                                                  "targetFileSha256": "$target.file.sha256",
@@ -243,10 +292,55 @@ def main():
                                                  "targetFileMd5": "$target.file.md5",
                                                  "targetFileSize": "$target.file.size",
                                                  "targetFileName": "$target.file.name"}}}])
+        elif args.md5:
+            cs = mongo_collection.aggregate([{"$match": {"target.file.md5": args.md5}},
+                                                {"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
+                                                 "targetFileSha256": "$target.file.sha256",
+                                                 "targetFileSha512": "$target.file.sha512",
+                                                 "targetFileSsdeep": "$target.file.ssdeep",
+                                                 "targetFileMd5": "$target.file.md5",
+                                                 "targetFileSize": "$target.file.size",
+                                                 "targetFileName": "$target.file.name"}}}])
+        elif args.sha1:
+            cs = mongo_collection.aggregate([{"$match": {"target.file.sha1": args.sha1}},
+                                                {"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
+                                                 "targetFileSha256": "$target.file.sha256",
+                                                 "targetFileSha512": "$target.file.sha512",
+                                                 "targetFileSsdeep": "$target.file.ssdeep",
+                                                 "targetFileMd5": "$target.file.md5",
+                                                 "targetFileSize": "$target.file.size",
+                                                 "targetFileName": "$target.file.name"}}}])
+        elif args.sha256:
+            cs = mongo_collection.aggregate([{"$match": {"target.file.sha256": args.sha256}},
+                                                {"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
+                                                 "targetFileSha256": "$target.file.sha256",
+                                                 "targetFileSha512": "$target.file.sha512",
+                                                 "targetFileSsdeep": "$target.file.ssdeep",
+                                                 "targetFileMd5": "$target.file.md5",
+                                                 "targetFileSize": "$target.file.size",
+                                                 "targetFileName": "$target.file.name"}}}])
+        elif args.sha512:
+            cs = mongo_collection.aggregate([{"$match": {"target.file.sha512": args.sha512}},
+                                                {"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
+                                                 "targetFileSha256": "$target.file.sha256",
+                                                 "targetFileSha512": "$target.file.sha512",
+                                                 "targetFileSsdeep": "$target.file.ssdeep",
+                                                 "targetFileMd5": "$target.file.md5",
+                                                 "targetFileSize": "$target.file.size",
+                                                 "targetFileName": "$target.file.name"}}}])
+        else:
+            cs = mongo_collection.aggregate([{"$group": {"_id": {"targetFileSha1": "$target.file.sha1",
+                                                         "targetFileSha256": "$target.file.sha256",
+                                                         "targetFileSha512": "$target.file.sha512",
+                                                         "targetFileSsdeep": "$target.file.ssdeep",
+                                                         "targetFileMd5": "$target.file.md5",
+                                                         "targetFileSize": "$target.file.size",
+                                                         "targetFileName": "$target.file.name"}}}])
         _l.debug('Executed initial aggregation query.')
         for i in cs['result']:
             try:
-                # Get everything that looks like an ip address
+                # Get all network indicators: addresses and names
+                networkItems[:] = []
                 ipv4Addresses[:] = []
                 hostNames[:] = []
                 networkUdpSrc = mongo_collection.find(
@@ -321,14 +415,6 @@ def main():
                         "target.file.md5": i['_id']['targetFileMd5'],
                         "target.file.size": i['_id']['targetFileSize'],
                         "target.file.name": i['_id']['targetFileName']}).distinct('network.domains.ip')
-                # Aggregate all addresses and remove duplicates and filtered ones
-                ipv4Addresses += networkUdpSrc + networkUdpDst + networkIcmpSrc + networkIcmpDst + \
-                    networkTcpSrc + networkTcpDst + networkDnsAnswersData + networkDomainsIp
-                ipv4Addresses = list(set(ipv4Addresses))
-                ipv4Addresses = filter(None, ipv4Addresses)
-                ipv4Addresses = list(set(ipv4Addresses) - set(fIpv4Addresses))
-
-                # Get everything that looks like a domain name
                 networkHttpHost = mongo_collection.find(
                     {
                         "target.file.sha1": i['_id']['targetFileSha1'],
@@ -365,12 +451,23 @@ def main():
                         "target.file.md5": i['_id']['targetFileMd5'],
                         "target.file.size": i['_id']['targetFileSize'],
                         "target.file.name": i['_id']['targetFileName']}).distinct('network.domains.domain')
-                # Aggregate all addresses and remove duplicates and filtered ones
-                hostNames += networkHttpHost + networkHosts + \
-                    networkDnsRequest + networkDomainsDomain
-                hostNames = list(set(hostNames))
-                hostNames = filter(None, hostNames)
-                hostNames = list(set(hostNames) - set(fHostNames))
+    
+                # Aggregate all found items and remove duplicates and empty
+                networkItems += networkUdpSrc + networkUdpDst + networkIcmpSrc + \
+                    networkIcmpDst + networkTcpSrc + networkTcpDst + \
+                    networkDnsAnswersData + networkDomainsIp + networkHttpHost + \
+                    networkHosts + networkDnsRequest + networkDomainsDomain
+                networkItems = list(set(networkItems))
+                networkItems = filter(None, networkItems)
+                
+                # Split into one list for addresses and one for host names
+                ipv4Addresses = keepAddresses(networkItems[:])
+                hostNames = keepHostNames(networkItems[:])
+    
+                # Delete addresses and host names if in whitelist files
+                ipv4Addresses = delIfMatchedAddr(ipv4Addresses, fIpv4Addresses)
+                hostNames = delIfMatchedHostName(hostNames, fHostNames)
+    
                 # Get file names
                 targetFileName = mongo_collection.find(
                     {
@@ -381,7 +478,7 @@ def main():
                         "target.file.md5": i['_id']['targetFileMd5'],
                         "target.file.size": i['_id']['targetFileSize'],
                         "target.file.name": i['_id']['targetFileName']}).distinct('target.file.name')
-
+               
                 # Call the function to create the output, check if seen before first
                 if str(i['_id']['targetFileSha1']) + ',' + \
                     str(i['_id']['targetFileSha256']) + ',' + \
@@ -417,8 +514,7 @@ def main():
             except Exception as e:
                 import traceback
                 tb = traceback.format_exc()
-                _l.info('!!!!!!!!!!!ERROR!!!!!!!!!!!')
-                _l.info('Row failed due to: ' + str(e) + "\n\n" + str(tb) + "\n\n" + str(repr(i)))
+                _l.error('Row failed due to: ' + str(e) + "\n\n" + str(tb) + "\n\n" + str(repr(i)))
         conn.disconnect()
     fSeenEntriesFH.closed
     _l.info('Ended.')
