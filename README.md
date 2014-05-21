@@ -17,9 +17,9 @@ app.conf - Application configuration settings.
 
 cuckoo2Stix.py - Generates STIX content from Mongodb.
 
-fHostNames.txt - Input file - Whitelist of host names for suppression, one item per line, can be an empty file.
+fHostNames.txt - Input file - Whitelist of host names for suppression, one item per line, can be an empty file.  Supports regex for whitelisting domains.  .*\.microsoft\.com
 
-fIpv4Addresses.txt - Input file - Whitelist of IP addresses for suppression, one item per line, can be an empty file.
+fIpv4Addresses.txt - Input file - Whitelist of IP addresses for suppression, one item per line, can be an empty file.  Now supports CIDR blocks and IP ranges.  [192.168.56.0/24] or [192.168.56.0 ... 192.168.56.255]
 
 fSeenEntries.txt - Previously generated items, written by cuckoo2Stix.py, and read in subsequent runs so that duplicate items are not generated. 
 
@@ -34,6 +34,9 @@ taxiiUpload.py - Sample script to upload TAXII content for a given STIX document
 Usage Examples:
 Generate STIX for a Cuckoo job id 5555:
 $ ./cuckoo2Stix.py --job-id 5555
+
+Generate STIX from a hash (MD5,SHA1,SHA256,SHA512)
+$ ./cuckoo2STIX.py --sha1 92c8a60fe8707c4a5340fb49132878334369aa6d
 
 Generate STIX for all current Cuckoo reports:
 $ ./cuckoo2Stix.py
